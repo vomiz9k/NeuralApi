@@ -3,7 +3,7 @@ using NeuralApi.RabbitMq;
 
 namespace NeuralApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api")]
     [ApiController]
     public class NeuralApiController : ControllerBase
     {
