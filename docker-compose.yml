@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  api:
+    container_name: NeuralApi
+    build:
+      context: ./
+      dockerfile: ./NeuralApi/Dockerfile
+    depends_on:
+      - "rabbit"
+    networks:
+      - api_net
+
+  worker:
+    container_name: NeuralWorker
+    build:
+      context: ./
+      dockerfile: ./NeuralWorker/Dockerfile
+    depends_on:
+      - "rabbit"
+    networks:
+      - worker_net
+     
+  rabbit:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - 5627:5672
+      - 15672:15672
+      - 80:80
+      - 443:443
+    networks:
+      - rabbitmq_go_net
+
+networks:
+    rabbitmq_go_net:
+        driver: bridge
+    worker_net:
+        driver: bridge
+    api_net:
+        driver: bridge
+
+volumes:
+  neuralapi:
+    external: true
+

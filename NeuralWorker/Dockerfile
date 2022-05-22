@@ -1,0 +1,35 @@
+#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+RUN apt update -y && apt install python3 -y && apt install pip -y
+RUN apt install ffmpeg libsm6 libxext6  -y
+COPY ["NeuralWorker/requirements.txt", "./"]
+RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
+
+FROM python:3.8-slim-buster
+RUN python3 1.py
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /src
+COPY ["NeuralWorker/NeuralWorker.csproj", "NeuralWorker/"]
+RUN dotnet restore "NeuralWorker/NeuralWorker.csproj"
+COPY . .
+WORKDIR "/src/NeuralWorker"
+RUN dotnet build "NeuralWorker.csproj" -c Release -o /app/build
+
+FROM python:3.8-slim-buster
+RUN python3 1.py
+
+FROM build AS publish
+RUN dotnet publish "NeuralWorker.csproj" -c Release -o /app/publish
+
+FROM python:3.8-slim-buster
+RUN python3 1.py
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "NeuralWorker.dll"]
